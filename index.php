@@ -6,8 +6,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $username = $_POST['username'];
     $password = $_POST['password'];
 
-    $query = "SELECT * FROM tb_user WHERE username='$username' AND password='$password'";
-    $result = mysqli_query($koneksi, $query);
+    $result = $conn->query("SELECT * FROM tb_user WHERE username='$username' AND password='$password'");
+
     $user = mysqli_fetch_assoc($result);
 
     if ($user) {

@@ -2,10 +2,109 @@
 session_start();
 include '../koneksi.php';
 
+function formatTanggalIndonesia($tanggal)
+{
+    $bulan = array(
+        1 => 'Januari',
+        2 => 'Februari',
+        3 => 'Maret',
+        4 => 'April',
+        5 => 'Mei',
+        6 => 'Juni',
+        7 => 'Juli',
+        8 => 'Agustus',
+        9 => 'September',
+        10 => 'Oktober',
+        11 => 'November',
+        12 => 'Desember'
+    );
+
+    $splitTanggal = explode('-', $tanggal);
+    $tahun = $splitTanggal[0];
+    $bulan = $bulan[(int)$splitTanggal[1]];
+    $hari = $splitTanggal[2];
+
+    return $hari . ' ' . $bulan . ' ' . $tahun;
+}
+
 if (!isset($_SESSION['username']) || $_SESSION['role'] !== 'admin') {
     header("Location: ../index.php");
     exit();
 }
+
+
+// Bagian untuk mengambil data guru
+$sql_guru = "SELECT id_guru, nama_guru FROM tb_guru";
+$result_guru = $conn->query($sql_guru);
+
+
+$result = $conn->query("SELECT d.id_dudi, d.nama_dudi, d.alamat, g.nama_guru 
+                        FROM tb_dudi d 
+                        LEFT JOIN tb_guru g ON d.id_guru = g.id_guru");
+
+
+if (isset($_POST['submit'])) {
+    // Fungsi untuk membuat ID DUDI otomatis
+    function generateIdDudi($conn)
+    {
+        $sql = "SELECT id_dudi FROM tb_dudi ORDER BY id_dudi DESC LIMIT 1";
+        $result = $conn->query($sql);
+        $lastId = $result->fetch_assoc();
+
+        if ($lastId) {
+            // Mengambil angka dari ID terakhir
+            $number = intval(substr($lastId['id_dudi'], 5)) + 1;
+        } else {
+            $number = 1;
+        }
+
+        // Membuat ID baru dengan format "DUDI-XXX"
+        return "DUDI-" . str_pad($number, 3, '0', STR_PAD_LEFT);
+    }
+
+    $id_dudi = generateIdDudi($conn);
+    $nama_dudi = $_POST['nama_dudi'];
+    $alamat = $_POST['alamat'];
+    $id_guru = $_POST['id_guru'];
+
+    $sql = "INSERT INTO tb_dudi (id_dudi, nama_dudi, alamat, id_guru) VALUES ('$id_dudi', '$nama_dudi', '$alamat', '$id_guru')";
+    if ($conn->query($sql) === TRUE) {
+        echo "<script>alert('Data berhasil ditambahkan'); window.location.href='datadudi.php';</script>";
+    } else {
+        echo "Error: " . $sql . "<br>" . $conn->error;
+    }
+}
+
+// Proses update data
+if (isset($_POST['update'])) {
+    $id_dudi = $_POST['id_dudi'];
+    $nama_dudi = $_POST['nama_dudi'];
+    $alamat = $_POST['alamat'];
+    $id_guru = $_POST['id_guru'];
+
+    $sql = "UPDATE tb_dudi SET nama_dudi = '$nama_dudi', alamat = '$alamat', id_guru = '$id_guru' WHERE id_dudi = '$id_dudi'";
+
+    if ($conn->query($sql) === TRUE) {
+        echo "<script>alert('Data berhasil diubah'); window.location.href='datadudi.php';</script>";
+    } else {
+        echo "Error: " . $conn->error;
+    }
+}
+
+// Proses hapus data
+if (isset($_GET['delete'])) {
+    $id_dudi = $_GET['delete'];
+
+    // Query untuk menghapus data berdasarkan id_dudi
+    $sql = "DELETE FROM tb_dudi WHERE id_dudi = '$id_dudi'";
+
+    if ($conn->query($sql) === TRUE) {
+        echo "<script>alert('Data berhasil dihapus'); window.location.href='datadudi.php';</script>";
+    } else {
+        echo "Error: " . $conn->error;
+    }
+}
+
 
 ?>
 
@@ -20,7 +119,7 @@ if (!isset($_SESSION['username']) || $_SESSION['role'] !== 'admin') {
     <meta name="description" content="">
     <meta name="author" content="">
 
-    <title>SB Admin 2 - Dashboard</title>
+    <title>Admin - Data Absensi Siswa</title>
 
     <!-- Custom fonts for this template-->
     <link href="../dist/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
@@ -30,6 +129,9 @@ if (!isset($_SESSION['username']) || $_SESSION['role'] !== 'admin') {
 
     <!-- Custom styles for this template-->
     <link href="../dist/css/sb-admin-2.min.css" rel="stylesheet">
+
+    <!-- Custom styles for this page -->
+    <link href="../dist/vendor/datatables/dataTables.bootstrap4.min.css" rel="stylesheet">
 
 </head>
 
@@ -89,11 +191,6 @@ if (!isset($_SESSION['username']) || $_SESSION['role'] !== 'admin') {
                 <a class="nav-link" href="catatanmonitoring.php">
                     <i class="fas fa-fw fa-chart-area"></i>
                     <span>Data Monitoring</span></a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="dudi/datadudi.php">
-                    <i class="fas fa-fw fa-chart-area"></i>
-                    <span>Data Dudi</span></a>
             </li>
 
             <!-- Divider -->
@@ -321,95 +418,113 @@ if (!isset($_SESSION['username']) || $_SESSION['role'] !== 'admin') {
                 <div class="container-fluid">
 
                     <!-- Page Heading -->
-                    <div class="d-sm-flex align-items-center justify-content-between mb-4">
-                        <h1 class="h3 mb-0 text-gray-800">Dashboard</h1>
-                        <a href="#" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm"><i
-                                class="fas fa-download fa-sm text-white-50"></i> Generate Report</a>
+                    <h1 class="h3 mb-2 text-gray-800">Data Absensi Siswa</h1>
+
+                    <button class="btn btn-primary mb-2" data-toggle="modal" data-target="#addModal">Tambah Data</button><br>
+
+                    <!-- Modal Tambah Data -->
+                    <div class="modal fade" id="addModal" tabindex="-1" role="dialog" aria-labelledby="addModalLabel" aria-hidden="true">
+                        <div class="modal-dialog" role="document">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="addModalLabel">Tambah Data DUDI</h5>
+                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                        <span aria-hidden="true">&times;</span>
+                                    </button>
+                                </div>
+                                <div class="modal-body">
+                                    <form method="post" action="">
+                                        Nama DUDI: <input type="text" name="nama_dudi" class="form-control" required><br>
+                                        Alamat: <textarea name="alamat" class="form-control" required></textarea><br>
+                                        ID Guru: <select name="id_guru" class="form-control" required>
+                                            <option value="">Pilih Guru</option>
+                                            <?php while ($row_guru = $result_guru->fetch_assoc()): ?>
+                                                <option value="<?= $row_guru['id_guru']; ?>"><?= $row_guru['nama_guru']; ?></option>
+                                            <?php endwhile; ?>
+                                        </select><br><br>
+                                        <input type="submit" name="submit" class="btn btn-success" value="Tambah">
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
-                    <!-- Content Row -->
-                    <div class="row">
 
-                        <!-- Earnings (Monthly) Card Example -->
-                        <div class="col-xl-3 col-md-6 mb-4">
-                            <div class="card border-left-primary shadow h-100 py-2">
-                                <div class="card-body">
-                                    <div class="row no-gutters align-items-center">
-                                        <div class="col mr-2">
-                                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                                                Earnings (Monthly)</div>
-                                            <div class="h5 mb-0 font-weight-bold text-gray-800">$40,000</div>
-                                        </div>
-                                        <div class="col-auto">
-                                            <i class="fas fa-calendar fa-2x text-gray-300"></i>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+
+                    <!-- DataTales Example -->
+                    <div class="card shadow mb-4">
+                        <div class="card-header py-3">
+                            <!-- <h6 class="m-0 font-weight-bold text-primary">DataTables Example</h6> -->
                         </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                                    <thead>
+                                        <tr>
+                                            <th>ID DUDI</th>
+                                            <th>Nama DUDI</th>
+                                            <th>Alamat</th>
+                                            <th>Nama Guru</th>
+                                            <th>Aksi</th>
+                                        </tr>
+                                    </thead>
+                                    <tfoot>
+                                        <tr>
+                                            <th>ID DUDI</th>
+                                            <th>Nama DUDI</th>
+                                            <th>Alamat</th>
+                                            <th>Nama Guru</th>
+                                            <th>Aksi</th>
+                                        </tr>
+                                    </tfoot>
+                                    <tbody>
+                                        <?php while ($row = $result->fetch_assoc()): ?>
+                                            <tr>
+                                                <td><?= $row['id_dudi']; ?></td>
+                                                <td><?= $row['nama_dudi']; ?></td>
+                                                <td><?= $row['alamat']; ?></td>
+                                                <td><?= $row['nama_guru']; ?></td>
+                                                <td>
+                                                    <button class="btn btn-primary" data-toggle="modal" data-target="#editModal<?= $row['id_dudi'] ?>">Edit</button>
+                                                    <a href="read.php?delete=<?= $row['id_dudi']; ?>"
+                                                        class="btn btn-danger"
+                                                        onclick="return confirm('Anda yakin ingin menghapus data ini?')">Hapus</a>
+                                                </td>
+                                            </tr>
 
-                        <!-- Earnings (Monthly) Card Example -->
-                        <div class="col-xl-3 col-md-6 mb-4">
-                            <div class="card border-left-success shadow h-100 py-2">
-                                <div class="card-body">
-                                    <div class="row no-gutters align-items-center">
-                                        <div class="col mr-2">
-                                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                                                Earnings (Annual)</div>
-                                            <div class="h5 mb-0 font-weight-bold text-gray-800">$215,000</div>
-                                        </div>
-                                        <div class="col-auto">
-                                            <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Earnings (Monthly) Card Example -->
-                        <div class="col-xl-3 col-md-6 mb-4">
-                            <div class="card border-left-info shadow h-100 py-2">
-                                <div class="card-body">
-                                    <div class="row no-gutters align-items-center">
-                                        <div class="col mr-2">
-                                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Tasks
-                                            </div>
-                                            <div class="row no-gutters align-items-center">
-                                                <div class="col-auto">
-                                                    <div class="h5 mb-0 mr-3 font-weight-bold text-gray-800">50%</div>
-                                                </div>
-                                                <div class="col">
-                                                    <div class="progress progress-sm mr-2">
-                                                        <div class="progress-bar bg-info" role="progressbar"
-                                                            style="width: 50%" aria-valuenow="50" aria-valuemin="0"
-                                                            aria-valuemax="100"></div>
+                                            <!-- Modal Edit Data -->
+                                            <div class="modal fade" id="editModal<?= $row['id_dudi'] ?>" tabindex="-1" role="dialog" aria-labelledby="editModalLabel" aria-hidden="true">
+                                                <div class="modal-dialog" role="document">
+                                                    <div class="modal-content">
+                                                        <div class="modal-header">
+                                                            <h5 class="modal-title" id="editModalLabel">Edit Data DUDI</h5>
+                                                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                                <span aria-hidden="true">&times;</span>
+                                                            </button>
+                                                        </div>
+                                                        <div class="modal-body">
+                                                            <form method="post" action="">
+                                                                <input type="hidden" name="id_dudi" id="edit_id_dudi">
+                                                                Nama DUDI: <input type="text" name="nama_dudi" value="<?= $row['nama_dudi'] ?>" class="form-control" required><br>
+                                                                Alamat: <textarea name="alamat" class="form-control" required><?= $row['alamat'] ?></textarea><br>
+                                                                ID Guru:
+                                                                <select name="id_guru" id="edit_id_guru" class="form-control" required>
+                                                                    <option value="">Pilih Guru</option>
+                                                                    <?php
+                                                                    $result_guru->data_seek(0); // Mengembalikan pointer hasil query ke awal
+                                                                    while ($row_guru = $result_guru->fetch_assoc()): ?>
+                                                                        <option value="<?= $row_guru['id_guru']; ?>"><?= $row_guru['nama_guru']; ?></option>
+                                                                    <?php endwhile; ?>
+                                                                </select><br>
+                                                                <input type="submit" name="update" class="btn btn-success" value="Simpan Perubahan">
+                                                            </form>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                        <div class="col-auto">
-                                            <i class="fas fa-clipboard-list fa-2x text-gray-300"></i>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Pending Requests Card Example -->
-                        <div class="col-xl-3 col-md-6 mb-4">
-                            <div class="card border-left-warning shadow h-100 py-2">
-                                <div class="card-body">
-                                    <div class="row no-gutters align-items-center">
-                                        <div class="col mr-2">
-                                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
-                                                Pending Requests</div>
-                                            <div class="h5 mb-0 font-weight-bold text-gray-800">18</div>
-                                        </div>
-                                        <div class="col-auto">
-                                            <i class="fas fa-comments fa-2x text-gray-300"></i>
-                                        </div>
-                                    </div>
-                                </div>
+                                        <?php endwhile; ?>
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
@@ -472,12 +587,19 @@ if (!isset($_SESSION['username']) || $_SESSION['role'] !== 'admin') {
     <script src="../dist/js/sb-admin-2.min.js"></script>
 
     <!-- Page level plugins -->
-    <script src="../dist/vendor/chart.js/Chart.min.js"></script>
+    <script src="../dist/vendor/datatables/jquery.dataTables.min.js"></script>
+    <script src="../dist/vendor/datatables/dataTables.bootstrap4.min.js"></script>
 
     <!-- Page level custom scripts -->
-    <script src="../dist/js/demo/chart-area-demo.js"></script>
-    <script src="../dist/js/demo/chart-pie-demo.js"></script>
+    <script src="../dist/js/demo/datatables-demo.js"></script>
 
 </body>
 
 </html>
+
+<?php
+// Proses penambahan data
+
+
+$conn->close();
+?>

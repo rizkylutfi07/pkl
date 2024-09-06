@@ -2,44 +2,57 @@
 session_start();
 include '../koneksi.php';
 
-// Atur zona waktu ke WIB
-date_default_timezone_set('Asia/Jakarta');
-
 
 if (!isset($_SESSION['username']) || $_SESSION['role'] !== 'siswa') {
-    header("Location: ../index.php");
+    header("Location: index.php");
     exit();
 }
 
-$username = $_SESSION['username'];
+// Ambil NISN siswa dari sesi login
+$nisn = $_SESSION['username'];
 
-$tanggal_hari_ini = date('Y-m-d');
+$result = $koneksi->query("SELECT d.id_jurnal, d.tanggal, g.tempat_pkl, d.evadir_personal, d.evadir_sosial, d.deskripsi_kegiatan, d.foto_kegiatan
+                        FROM tb_jurnal d
+                        LEFT JOIN tb_siswa g ON d.nisn = g.nisn
+                        WHERE d.nisn = '$nisn'
+                        ORDER BY tanggal DESC");
 
-// Cek apakah siswa sudah absen hari ini
+function formatTanggalIndonesia($tanggal)
+{
+    $bulan = array(
+        1 => 'Januari',
+        2 => 'Februari',
+        3 => 'Maret',
+        4 => 'April',
+        5 => 'Mei',
+        6 => 'Juni',
+        7 => 'Juli',
+        8 => 'Agustus',
+        9 => 'September',
+        10 => 'Oktober',
+        11 => 'November',
+        12 => 'Desember'
+    );
 
-$result = $koneksi->query("SELECT * FROM tb_absensi WHERE nisn = '$username' AND tanggal = '$tanggal_hari_ini'");
+    $splitTanggal = explode('-', $tanggal);
+    $tahun = $splitTanggal[0];
+    $bulan = $bulan[(int)$splitTanggal[1]];
+    $hari = $splitTanggal[2];
 
-$sudah_absen = mysqli_num_rows($result) > 0;
-
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && !$sudah_absen) {
-    $status = $_POST['status'];
-    $keterangan = $_POST['keterangan'];
-    $lokasi = $_POST['lokasi'];
-    $waktu_absensi = date('H:i:s'); // Mengambil waktu saat ini
-
-    $sql = "INSERT INTO tb_absensi (nisn, tanggal, status, keterangan, lokasi, jam_absensi) VALUES ('$username', '$tanggal_hari_ini', '$status', '$keterangan', '$lokasi', '$waktu_absensi')";
-    if ($koneksi->query($sql) === TRUE) {
-        echo "<script>alert('anda berhasil absensi hari ini); window.location.href='dahsboard.php';</script>";
-    } else {
-        echo "Error: " . $sql . "<br>" . $koneksi->error;
-    }
-
-
-    $_SESSION['message'] = 'Absensi berhasil disimpan!';
-    header('Location: dashboard.php');
-    exit();
+    return $hari . ' ' . $bulan . ' ' . $tahun;
 }
 
+$result_siswa = $koneksi->query("SELECT * FROM tb_siswa WHERE nisn = '$nisn'");
+$siswa = $result_siswa->fetch_assoc();
+
+// Memproses permintaan hapus jika ada
+if (isset($_GET['hapus'])) {
+    $id_jurnal = $_GET['hapus'];
+    $query = "DELETE FROM tb_jurnal WHERE id_jurnal = '$id_jurnal'";
+    mysqli_query($koneksi, $query);
+    header("Location: data_jurnal.php");
+    exit();
+}
 
 ?>
 
@@ -47,7 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && !$sudah_absen) {
 <html lang="en" data-bs-theme="auto">
 
 <head>
-    <script src="../dist/js/color-modes.js"></script>
+    <script src="assets/js/color-modes.js"></script>
 
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -56,7 +69,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && !$sudah_absen) {
         name="author"
         content="Mark Otto, Jacob Thornton, and Bootstrap contributors" />
     <meta name="generator" content="Hugo 0.122.0" />
-    <title>PKL Esgriba 2024</title>
+    <title>Data Jurnal</title>
 
     <link
         rel="canonical"
@@ -67,6 +80,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && !$sudah_absen) {
         href="https://cdn.jsdelivr.net/npm/@docsearch/css@3" />
 
     <link href="../dist/css/bootstrap.min.css" rel="stylesheet" />
+    <!-- DataTables CSS -->
+    <link href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+
 
     <style>
         .bd-placeholder-img {
@@ -286,48 +302,55 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && !$sudah_absen) {
                 </a>
 
                 <ul class="nav nav-pills">
+                    <li class="nav-item"><a href="dashboard.php" class="nav-link">Home</a></li>
                     <li class="nav-item">
-                        <a href="#" class="nav-link active" aria-current="page">Home</a>
+                        <a href="#" class="nav-link active" aria-current="page">Data Jurnal</a>
                     </li>
-                    <li class="nav-item"><a href="data_jurnal.php" class="nav-link">Data Jurnal</a></li>
-                    <li class="nav-item"><a href="logout.php" class="nav-link">Logout</a></li>
+                    <li class="nav-item"><a href="../logout.php" class="nav-link">Logout</a></li>
                 </ul>
             </header>
         </div>
         <!-- konten -->
         <div class="container">
-            <h2 class="mt-5">Halaman Beranda Siswa</h2>
-            <p>Selamat datang, <?php echo htmlspecialchars($_SESSION['username']); ?></p>
+            <h2 class="mt-5 mb-3">Data Jurnal Siswa</h2>
+
             <a href="input_jurnal.php" class="btn btn-primary">Input Jurnal</a></p>
 
-            <h2 <?php if ($sudah_absen) echo 'hidden'; ?>>Input Absensi</h2>
-            <?php if ($sudah_absen): ?>
-                <div class="alert alert-warning">
-                    Anda sudah melakukan absensi hari ini.
-                </div>
-            <?php elseif (isset($_SESSION['message'])): ?>
-                <div class="alert alert-success">
-                    <?php echo $_SESSION['message'];
-                    unset($_SESSION['message']); ?>
-                </div>
-            <?php endif; ?>
-            <form action="" method="POST" onsubmit="return getLocation()">
-                <div class=" mb-3">
-                    <label for="status" class="form-label" <?php if ($sudah_absen) echo 'hidden'; ?>>Status Kehadiran</label>
-                    <select id="status" name="status" class="form-select" required <?php if ($sudah_absen) echo 'hidden'; ?>>
-                        <option value="Hadir">Hadir</option>
-                        <option value="Izin">Izin</option>
-                        <option value="Sakit">Sakit</option>
-                        <option value="Alpha">Alpha</option>
-                    </select>
-                </div>
-                <div class="mb-3">
-                    <label for="keterangan" class="form-label" <?php if ($sudah_absen) echo 'hidden'; ?>>Keterangan</label>
-                    <textarea id="keterangan" name="keterangan" class="form-control" <?php if ($sudah_absen) echo 'hidden'; ?>></textarea>
-                </div>
-                <input type="hidden" id="lokasi" name="lokasi">
-                <button type="submit" class="btn btn-primary" <?php if ($sudah_absen) echo 'hidden'; ?>>Simpan Absensi</button>
-            </form>
+            <table id="jurnalTable" class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>ID Jurnal</th>
+                        <th>Tanggal</th>
+                        <th>Tempat PKL</th>
+                        <th>Evaluasi Diri (Personal)</th>
+                        <th>Evaluasi Diri (Sosial)</th>
+                        <th>Deskripsi Kegiatan</th>
+                        <th>Foto Kegiatan</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php
+                    $query = "SELECT * FROM tb_jurnal WHERE nisn = '" . $_SESSION['username'] . "'";
+                    $result = mysqli_query($koneksi, $query);
+                    while ($row = mysqli_fetch_assoc($result)) {
+                        echo "<tr>
+                        <td>" . $row['id_jurnal'] . "</td>
+                        <td>" . formatTanggalIndonesia($row['tanggal']) . "</td>
+                        <td>" . $row['nama_dudi'] . "</td>
+                        <td>" . $row['evadir_personal'] . "</td>
+                        <td>" . $row['evadir_sosial'] . "</td>
+                        <td>" . $row['deskripsi_kegiatan'] . "</td>
+                        <td><img src='../uploads/" . $row['foto_kegiatan'] . "' alt='Foto Kegiatan' width='100'></td>
+                        <td>
+                            <a href='edit_jurnal.php?id_jurnal=" . $row['id_jurnal'] . "' class='btn btn-warning btn-sm'>Edit</a>
+                            <a href='data_jurnal.php?hapus=" . $row['id_jurnal'] . "' class='btn btn-danger btn-sm' onclick=\"return confirm('Apakah Anda yakin ingin menghapus data ini?')\">Hapus</a>
+                        </td>
+                      </tr>";
+                    }
+                    ?>
+                </tbody>
+            </table>
         </div>
 
 
@@ -361,24 +384,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && !$sudah_absen) {
         </div>
 
     </main>
-    <script src="assets/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Bootstrap JS dan DataTables JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
     <script>
-        function getLocation() {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(function(position) {
-                    const latitude = position.coords.latitude;
-                    const longitude = position.coords.longitude;
-                    document.getElementById('lokasi').value = `${latitude},${longitude}`;
-                    document.querySelector('form').submit();
-                }, function(error) {
-                    alert('Gagal mendapatkan lokasi. Silakan coba lagi.');
-                });
-                return false; // Prevent default form submission until location is set
-            } else {
-                alert('Geolocation tidak didukung oleh browser ini.');
-                return false;
-            }
-        }
+        $(document).ready(function() {
+            $('#jurnalTable').DataTable();
+        });
     </script>
 </body>
 

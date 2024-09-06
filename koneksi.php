@@ -1,11 +1,11 @@
 <?php
-$servername = "localhost";
-$username = "root";
-$password = "";
-$dbname = "db_pkl";
+$host = 'localhost';
+$user = 'root';
+$password = '';
+$database = 'db_pkl';
 
-$conn = new mysqli($servername, $username, $password, $dbname);
+$koneksi = mysqli_connect($host, $user, $password, $database);
 
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
+if (!$koneksi) {
+    die("Koneksi gagal: " . mysqli_connect_error());
 }

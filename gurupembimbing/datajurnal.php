@@ -27,7 +27,7 @@ function formatTanggalIndonesia($tanggal)
     return $hari . ' ' . $bulan . ' ' . $tahun;
 }
 
-if (!isset($_SESSION['username']) || $_SESSION['role'] !== 'admin') {
+if (!isset($_SESSION['username']) || $_SESSION['role'] !== 'guru') {
     header("Location: ../index.php");
     exit();
 }

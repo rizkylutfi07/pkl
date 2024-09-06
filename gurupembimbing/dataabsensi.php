@@ -27,12 +27,14 @@ function formatTanggalIndonesia($tanggal)
     return $hari . ' ' . $bulan . ' ' . $tahun;
 }
 
-if (!isset($_SESSION['username']) || $_SESSION['role'] !== 'admin') {
+if (!isset($_SESSION['username']) || $_SESSION['role'] !== 'guru') {
     header("Location: ../index.php");
     exit();
 }
 
-$result = $koneksi->query("SELECT * FROM tb_jurnal");
+$id_guru = $_SESSION['username'];
+
+$result = $koneksi->query("SELECT * FROM tb_absensi WHERE id_guru = '$id_guru'");
 
 ?>
 
@@ -47,7 +49,7 @@ $result = $koneksi->query("SELECT * FROM tb_jurnal");
     <meta name="description" content="">
     <meta name="author" content="">
 
-    <title>Admin - Data Jurnal Siswa</title>
+    <title>Admin - Data Absensi Siswa</title>
 
     <!-- Custom fonts for this template-->
     <link href="../dist/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
@@ -195,47 +197,36 @@ $result = $koneksi->query("SELECT * FROM tb_jurnal");
                 <div class="container-fluid">
 
                     <!-- Page Heading -->
-                    <h1 class="h3 mb-2 text-gray-800">Data Jurnal Siswa</h1>
+                    <h1 class="h3 mb-2 text-gray-800">Data Absensi Siswa</h1>
 
                     <!-- DataTales Example -->
                     <div class="card shadow mb-4">
                         <div class="card-header py-3">
                             <h6 class="m-0 font-weight-bold text-primary">DataTables Example</h6>
-
                         </div>
-
-
                         <div class="card-body">
                             <div class="table-responsive">
                                 <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
                                     <thead>
                                         <tr>
-                                            <th>ID Jurnal</th>
+                                            <th>Tanggal</th>
                                             <th>NISN</th>
                                             <th>Nama Siswa</th>
-                                            <th>Tahun Pelajaran</th>
-                                            <th>Semester</th>
-                                            <th>Tanggal</th>
-                                            <th>Tempat PKL</th>
-                                            <th>Evaluasi Diri (Personal)</th>
-                                            <th>Evaluasi Diri (Sosial)</th>
-                                            <th>Deskripsi Kegiatan</th>
-                                            <th>Foto Kegiatan</th>
+                                            <th>Kelas</th>
+                                            <th>Status</th>
+                                            <th>Keterangan</th>
+                                            <th>Lokasi</th>
                                         </tr>
                                     </thead>
                                     <tfoot>
                                         <tr>
-                                            <th>ID Jurnal</th>
+                                            <th>Tanggal</th>
                                             <th>NISN</th>
                                             <th>Nama Siswa</th>
-                                            <th>Tahun Pelajaran</th>
-                                            <th>Semester</th>
-                                            <th>Tanggal</th>
-                                            <th>Tempat PKL</th>
-                                            <th>Evaluasi Diri (Personal)</th>
-                                            <th>Evaluasi Diri (Sosial)</th>
-                                            <th>Deskripsi Kegiatan</th>
-                                            <th>Foto Kegiatan</th>
+                                            <th>Kelas</th>
+                                            <th>Status</th>
+                                            <th>Keterangan</th>
+                                            <th>Lokasi</th>
                                         </tr>
                                     </tfoot>
                                     <tbody>
@@ -245,28 +236,21 @@ $result = $koneksi->query("SELECT * FROM tb_jurnal");
                                             $longitude = '';
                                             if (!empty($lokasi)) {
                                                 list($latitude, $longitude) = explode(',', $lokasi);
-                                            }
-
-                                        ?>
+                                            } ?>
                                             <tr>
-                                                <td><?php echo $row['id_jurnal']; ?></td>
+                                                <td><?php echo formatTanggalIndonesia($row['tanggal']); ?></td>
                                                 <td><?php echo $row['nisn']; ?></td>
                                                 <td><?php echo $row['nama_siswa']; ?></td>
-                                                <td><?php echo $row['tahun_pelajaran']; ?></td>
-                                                <td><?php echo $row['semester']; ?></td>
-                                                <td><?php echo formatTanggalIndonesia($row['tanggal']); ?></td>
-                                                <td><?php echo $row['tempat_pkl']; ?></td>
-                                                <td><?php echo $row['evadir_personal']; ?></td>
-                                                <td><?php echo $row['evadir_sosial']; ?></td>
-                                                <td><?php echo $row['deskripsi_kegiatan']; ?></td>
-                                                <td><img src="../<?php echo $row['foto_kegiatan']; ?>" alt="Foto Kegiatan" width="100"></td>
-                                                <!-- <td>
-                                        <?php if (!empty($lokasi)) { ?>
-                                            <a href="https://www.google.com/maps?q=<?php echo $latitude; ?>,<?php echo $longitude; ?>" target="_blank">Lihat di Google Maps</a>
-                                        <?php } else { ?>
-                                            Tidak ada lokasi
-                                        <?php } ?>
-                                    </td> -->
+                                                <td><?php echo $row['kelas']; ?></td>
+                                                <td><?php echo $row['status']; ?></td>
+                                                <td><?php echo $row['keterangan']; ?></td>
+                                                <td>
+                                                    <?php if (!empty($lokasi)) { ?>
+                                                        <a href="https://www.google.com/maps?q=<?php echo $latitude; ?>,<?php echo $longitude; ?>" target="_blank">Lihat di Google Maps</a>
+                                                    <?php } else { ?>
+                                                        Tidak ada lokasi
+                                                    <?php } ?>
+                                                </td>
                                             </tr>
                                         <?php } ?>
                                     </tbody>

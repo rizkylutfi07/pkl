@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Sep 05, 2024 at 04:30 PM
+-- Generation Time: Sep 06, 2024 at 03:36 AM
 -- Server version: 8.0.30
 -- PHP Version: 8.1.10
 
@@ -244,6 +244,14 @@ CREATE TABLE `tb_dudi` (
   `id_guru` varchar(20) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
+--
+-- Dumping data for table `tb_dudi`
+--
+
+INSERT INTO `tb_dudi` (`id_dudi`, `nama_dudi`, `alamat`, `id_guru`) VALUES
+('DUDI-001', 'Balaidesa Wonorejo', 'Jln. Pandean , Kendal Ds. Wonorejo', 'subur'),
+('DUDI-002', 'Balaidesa Bajulmati', 'Jl. Raya Bajulmati No. 80', 'imtiana');
+
 -- --------------------------------------------------------
 
 --
@@ -254,6 +262,14 @@ CREATE TABLE `tb_guru` (
   `id_guru` varchar(100) NOT NULL,
   `nama_guru` varchar(100) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- Dumping data for table `tb_guru`
+--
+
+INSERT INTO `tb_guru` (`id_guru`, `nama_guru`) VALUES
+('subur', 'Dra.Subur Hindartin'),
+('imtiana', 'Imtiana,S.Pd');
 
 -- --------------------------------------------------------
 

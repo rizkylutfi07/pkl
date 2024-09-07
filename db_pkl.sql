@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Sep 07, 2024 at 03:09 AM
+-- Generation Time: Sep 07, 2024 at 12:25 PM
 -- Server version: 8.0.30
 -- PHP Version: 8.1.10
 
@@ -65,7 +65,27 @@ CREATE TABLE `tb_dudi` (
 
 INSERT INTO `tb_dudi` (`id_dudi`, `nama_dudi`, `alamat`, `id_guru`) VALUES
 ('DUDI-001', 'Balaidesa Wonorejo', 'Jln. Pandean , Kendal Ds. Wonorejo', 'subur'),
-('DUDI-002', 'Balaidesa Bajulmati', 'Jl. Raya Bajulmati No. 80', 'imtiana');
+('DUDI-002', 'Taman Nasional Baluran', 'Jln. Raya Banyuwangi-situbondo km.35 wonorejo', 'subur'),
+('DUDI-003', 'Balaidesa Bajulmati', 'Jl. Raya Bajulmati No. 80', 'imtiana'),
+('DUDI-004', 'Balaidesa Watukebo', 'Jl. Pasewaran Nomor 8. ', 'rizal'),
+('DUDI-005', 'Balaidesa Bimorejo', 'Jl. Lambau, Bimorejo, Kec. Wongsorejo, Kab. Banyuwangi', 'rizal'),
+('DUDI-006', 'Balaidesa Alasrejo', 'Jl. Raya Alasrejo Nomor 43', 'nurmala'),
+('DUDI-007', 'Balaidesa Sidodadi', 'Jl. Raya Bajulmati No. 38, curah sawo', 'aini'),
+('DUDI-008', 'Balaidesa Wongsorejo', 'Jl. Raya wongsorejo Nomor 124', 'nurmala'),
+('DUDI-009', 'Wifi RT RW Bimorejo', 'Jl. Lambau, Bimorejo, Kec. Wongsorejo, Kab. Banyuwangi', 'rizal'),
+('DUDI-010', 'Ria Mobil ( Alas Malang)', 'Jln. Raya Situbondo - Alasrejo', 'rohim'),
+('DUDI-011', 'Cipta Agung motor Banyuwangi', 'Jln Argopuro No. 17 Lingkungan Sukowidi Klatak, Kalipuro. BWI', 'yudi'),
+('DUDI-012', 'Yudha Putra', 'Jln. Raya Situbondo Karanganyar Bajulmati Wongsorejob Banyuwangi', 'yudi'),
+('DUDI-013', 'Maharika Jaya', 'Jln. Raya Situbondo. Dusun Curahuser RT.03 RW.01. Desa Sumberanyar Wongsorejo', 'rohim'),
+('DUDI-014', 'Balaidesa Wonorejo', 'Jln. Pandean , Kendal Ds. Wonorejo', 'subur'),
+('DUDI-015', 'Balaidesa Sidodadi', 'Jl. Raya Bajulmati No. 38, curah sawo', 'aini'),
+('DUDI-016', 'PDAM Wongsorejo', 'Jln. Raya Situbondo, Curahuser Sumberanyar', 'aini'),
+('DUDI-017', ' Kecamatan Wongsorejo', 'Jln. Raya Situbondo, Wongsorejo No. 136', 'siska'),
+('DUDI-018', 'Balai Desa Watukebo', 'Jl. Pasewaran Nomor 8. ', 'rizal'),
+('DUDI-019', 'Puskesmas Wongsorejo', 'Jln. Raya Situbondo, alasrejo No.04 Wongsorejo ', 'siska'),
+('DUDI-020', 'BANK Nusamba', 'Jln. Raya Situbondo, Curah user Wongsorejo ', 'nurmala'),
+('DUDI-021', 'KSP Artha Anugrah Wonorejo', 'Jln. Pandean , Randuagung Ds. Wonorejo', 'imtiana'),
+('DUDI-022', 'BANK Mandiri Cab.Banyuwangi', 'Jln. Raya Situbondo,  No. 61 Bajulmati', 'imtiana');
 
 -- --------------------------------------------------------
 
@@ -83,8 +103,14 @@ CREATE TABLE `tb_guru` (
 --
 
 INSERT INTO `tb_guru` (`id_guru`, `nama_guru`) VALUES
-('imtiana', 'Imtiana,S.Pd'),
-('subur', 'Dra.Subur Hindartin');
+('aini', 'Aini Abdul Cholis, S.Pd'),
+('imtiana', 'Imtiana, S.Pd'),
+('nurmala', 'Nurmala Evayanti, S.Pd'),
+('rizal', 'Syamsul Rizal, S.Pd.I'),
+('rohim', 'Moh.Rohim, S.T'),
+('siska', 'Siska Purwanti, S.E'),
+('subur', 'Dra. Subur Hindartin'),
+('yudi', 'Dwi Wahyudi, S.T');
 
 -- --------------------------------------------------------
 

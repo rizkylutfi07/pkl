@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Sep 06, 2024 at 04:57 PM
+-- Generation Time: Sep 07, 2024 at 03:09 AM
 -- Server version: 8.0.30
 -- PHP Version: 8.1.10
 
@@ -34,15 +34,17 @@ CREATE TABLE `tb_absensi` (
   `tanggal` date NOT NULL,
   `status` enum('Hadir','Izin','Sakit','Alpha') NOT NULL,
   `keterangan` text,
-  `jam_absensi` time NOT NULL
+  `jam_absensi` time NOT NULL,
+  `id_guru` varchar(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `tb_absensi`
 --
 
-INSERT INTO `tb_absensi` (`id_absensi`, `nisn`, `lokasi`, `tanggal`, `status`, `keterangan`, `jam_absensi`) VALUES
-(2, 'dinda', '-8.1657856,113.7180672', '2024-09-06', 'Hadir', '', '20:31:13');
+INSERT INTO `tb_absensi` (`id_absensi`, `nisn`, `lokasi`, `tanggal`, `status`, `keterangan`, `jam_absensi`, `id_guru`) VALUES
+(4, 'dinda', '-7.6939264,112.8464384', '2024-09-07', 'Hadir', '', '08:53:10', 'subur'),
+(5, 'tegar', '-7.6939264,112.8464384', '2024-09-07', 'Hadir', '', '08:59:57', 'imtiana');
 
 -- --------------------------------------------------------
 
@@ -105,12 +107,26 @@ CREATE TABLE `tb_jurnal` (
   `nama_dudi` varchar(100) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
+-- --------------------------------------------------------
+
 --
--- Dumping data for table `tb_jurnal`
+-- Table structure for table `tb_monitoring`
 --
 
-INSERT INTO `tb_jurnal` (`id_jurnal`, `nisn`, `nama_siswa`, `tahun_pelajaran`, `tanggal`, `evadir_personal`, `evadir_sosial`, `foto_kegiatan`, `deskripsi_kegiatan`, `lokasi`, `id_guru`, `nama_dudi`) VALUES
-('J-002', 'dinda', 'dinda maharani', '2024-2025', '2024-09-20', 'Disiplin, Tanggung Jawab', 'Berkomunikasi dengan Pimpinan, Berkomunikasi/bekerjasama dengan karyawan', '../uploads/Banner Ucapan Memperingati Maulid Nabi Muhammad SAW.png', 'erfsdfsdfsdfsdfsd', '-8.1559552,113.7082368', 'subur', 'Kantor Kecamatan');
+CREATE TABLE `tb_monitoring` (
+  `id_monitoring` varchar(11) NOT NULL,
+  `tanggal` date NOT NULL,
+  `catatan_monitoring` text NOT NULL,
+  `id_dudi` varchar(20) NOT NULL,
+  `id_guru` varchar(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- Dumping data for table `tb_monitoring`
+--
+
+INSERT INTO `tb_monitoring` (`id_monitoring`, `tanggal`, `catatan_monitoring`, `id_dudi`, `id_guru`) VALUES
+('CM-001', '2024-09-07', 'asd', 'DUDI-001', 'subur');
 
 -- --------------------------------------------------------
 
@@ -189,6 +205,12 @@ ALTER TABLE `tb_jurnal`
   ADD PRIMARY KEY (`id_jurnal`);
 
 --
+-- Indexes for table `tb_monitoring`
+--
+ALTER TABLE `tb_monitoring`
+  ADD PRIMARY KEY (`id_monitoring`);
+
+--
 -- Indexes for table `tb_siswa`
 --
 ALTER TABLE `tb_siswa`
@@ -208,7 +230,7 @@ ALTER TABLE `tb_user`
 -- AUTO_INCREMENT for table `tb_absensi`
 --
 ALTER TABLE `tb_absensi`
-  MODIFY `id_absensi` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id_absensi` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT for table `tb_user`
